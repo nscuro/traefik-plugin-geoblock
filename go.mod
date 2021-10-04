@@ -3,7 +3,7 @@ module github.com/nscuro/traefik-plugin-geoblock
 go 1.17
 
 require (
-	github.com/ip2location/ip2location-go v8.3.0+incompatible
+	github.com/ip2location/ip2location-go v8.4.0+incompatible
 	github.com/stretchr/testify v1.7.0
 )
 

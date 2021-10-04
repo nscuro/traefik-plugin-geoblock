@@ -7,12 +7,18 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"math"
 	"math/big"
 	"net"
 	"os"
 	"strconv"
 )
+
+type DBReader interface {
+	io.ReadCloser
+	io.ReaderAt
+}
 
 type ip2locationmeta struct {
 	databasetype      uint8
@@ -56,7 +62,7 @@ type IP2Locationrecord struct {
 }
 
 type DB struct {
-	f    *os.File
+	f    DBReader
 	meta ip2locationmeta
 
 	country_position_offset            uint32
@@ -124,7 +130,7 @@ var mobilebrand_position = [25]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 var elevation_position = [25]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 19, 0, 19}
 var usagetype_position = [25]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12, 20}
 
-const api_version string = "8.3.0"
+const api_version string = "8.4.0"
 
 var max_ipv4_range = big.NewInt(4294967295)
 var max_ipv6_range = big.NewInt(0)
@@ -326,6 +332,17 @@ func fatal(db *DB, err error) (*DB, error) {
 // Open takes the path to the IP2Location BIN database file. It will read all the metadata required to
 // be able to extract the embedded geolocation data, and return the underlining DB object.
 func OpenDB(dbpath string) (*DB, error) {
+	f, err := os.Open(dbpath)
+	if err != nil {
+		return nil, err
+	}
+
+	return OpenDBWithReader(f)
+}
+
+// OpenDBWithReader takes a DBReader to the IP2Location BIN database file. It will read all the metadata required to
+// be able to extract the embedded geolocation data, and return the underlining DB object.
+func OpenDBWithReader(reader DBReader) (*DB, error) {
 	var db = &DB{}
 
 	max_ipv6_range.SetString("340282366920938463463374607431768211455", 10)
@@ -334,12 +351,9 @@ func OpenDB(dbpath string) (*DB, error) {
 	from_teredo.SetString("42540488161975842760550356425300246528", 10)
 	to_teredo.SetString("42540488241204005274814694018844196863", 10)
 
-	var err error
-	db.f, err = os.Open(dbpath)
-	if err != nil {
-		return nil, err
-	}
+	db.f = reader
 
+	var err error
 	db.meta.databasetype, err = db.readuint8(1)
 	if err != nil {
 		return fatal(db, err)
@@ -389,83 +403,6 @@ func OpenDB(dbpath string) (*DB, error) {
 
 	dbt := db.meta.databasetype
 
-	// since both IPv4 and IPv6 use 4 bytes for the below columns, can just do it once here
-	// if country_position[dbt] != 0 {
-	// country_position_offset = uint32(country_position[dbt] - 1) << 2
-	// country_enabled = true
-	// }
-	// if region_position[dbt] != 0 {
-	// region_position_offset = uint32(region_position[dbt] - 1) << 2
-	// region_enabled = true
-	// }
-	// if city_position[dbt] != 0 {
-	// city_position_offset = uint32(city_position[dbt] - 1) << 2
-	// city_enabled = true
-	// }
-	// if isp_position[dbt] != 0 {
-	// isp_position_offset = uint32(isp_position[dbt] - 1) << 2
-	// isp_enabled = true
-	// }
-	// if domain_position[dbt] != 0 {
-	// domain_position_offset = uint32(domain_position[dbt] - 1) << 2
-	// domain_enabled = true
-	// }
-	// if zipcode_position[dbt] != 0 {
-	// zipcode_position_offset = uint32(zipcode_position[dbt] - 1) << 2
-	// zipcode_enabled = true
-	// }
-	// if latitude_position[dbt] != 0 {
-	// latitude_position_offset = uint32(latitude_position[dbt] - 1) << 2
-	// latitude_enabled = true
-	// }
-	// if longitude_position[dbt] != 0 {
-	// longitude_position_offset = uint32(longitude_position[dbt] - 1) << 2
-	// longitude_enabled = true
-	// }
-	// if timezone_position[dbt] != 0 {
-	// timezone_position_offset = uint32(timezone_position[dbt] - 1) << 2
-	// timezone_enabled = true
-	// }
-	// if netspeed_position[dbt] != 0 {
-	// netspeed_position_offset = uint32(netspeed_position[dbt] - 1) << 2
-	// netspeed_enabled = true
-	// }
-	// if iddcode_position[dbt] != 0 {
-	// iddcode_position_offset = uint32(iddcode_position[dbt] - 1) << 2
-	// iddcode_enabled = true
-	// }
-	// if areacode_position[dbt] != 0 {
-	// areacode_position_offset = uint32(areacode_position[dbt] - 1) << 2
-	// areacode_enabled = true
-	// }
-	// if weatherstationcode_position[dbt] != 0 {
-	// weatherstationcode_position_offset = uint32(weatherstationcode_position[dbt] - 1) << 2
-	// weatherstationcode_enabled = true
-	// }
-	// if weatherstationname_position[dbt] != 0 {
-	// weatherstationname_position_offset = uint32(weatherstationname_position[dbt] - 1) << 2
-	// weatherstationname_enabled = true
-	// }
-	// if mcc_position[dbt] != 0 {
-	// mcc_position_offset = uint32(mcc_position[dbt] - 1) << 2
-	// mcc_enabled = true
-	// }
-	// if mnc_position[dbt] != 0 {
-	// mnc_position_offset = uint32(mnc_position[dbt] - 1) << 2
-	// mnc_enabled = true
-	// }
-	// if mobilebrand_position[dbt] != 0 {
-	// mobilebrand_position_offset = uint32(mobilebrand_position[dbt] - 1) << 2
-	// mobilebrand_enabled = true
-	// }
-	// if elevation_position[dbt] != 0 {
-	// elevation_position_offset = uint32(elevation_position[dbt] - 1) << 2
-	// elevation_enabled = true
-	// }
-	// if usagetype_position[dbt] != 0 {
-	// usagetype_position_offset = uint32(usagetype_position[dbt] - 1) << 2
-	// usagetype_enabled = true
-	// }
 	if country_position[dbt] != 0 {
 		db.country_position_offset = uint32(country_position[dbt]-2) << 2
 		db.country_enabled = true
