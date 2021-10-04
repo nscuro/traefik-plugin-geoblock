@@ -5,7 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/ip2location/ip2location-go"
+	"github.com/ip2location/ip2location-go/v9"
 	"log"
 	"net/http"
 	"strings"
