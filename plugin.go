@@ -12,8 +12,9 @@ import (
 )
 
 type Config struct {
-	DatabaseFilePath string
+	DatabaseFilePath string   `yaml:"database_file"`
 	AllowedCountries []string `yaml:"allowed_countries"`
+	AllowPrivate     bool     `yaml:"allow_private"`
 }
 
 func CreateConfig() *Config {
@@ -25,6 +26,7 @@ type Plugin struct {
 	name             string
 	db               *ip2location.DB
 	allowedCountries []string
+	allowPrivate     bool
 }
 
 func New(_ context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
@@ -33,27 +35,39 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	return &Plugin{next: next, name: name, db: db, allowedCountries: config.AllowedCountries}, nil
+	return &Plugin{
+		next:             next,
+		name:             name,
+		db:               db,
+		allowedCountries: config.AllowedCountries,
+		allowPrivate:     config.AllowPrivate,
+	}, nil
 }
 
 func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	ips := p.GetRemoteIPs(req)
 
 	for _, ip := range ips {
-		allowed, country, err := p.CheckAllowed(ip)
-		if err != nil {
-			log.Printf("%s: %v", p.name, err)
-			rw.WriteHeader(http.StatusForbidden)
+		country, err := p.CheckAllowed(ip)
+		if err == nil {
+			p.next.ServeHTTP(rw, req)
 			return
 		}
-		if !allowed {
+		if errors.Is(err, ErrPrivate) && p.allowPrivate {
+			log.Printf("%s: allowed for private address %s", p.name, ip)
+			p.next.ServeHTTP(rw, req)
+			return
+		} else if errors.Is(err, ErrNotAllowed) {
 			log.Printf("%s: access denied for %s (%s)", p.name, ip, country)
+			rw.WriteHeader(http.StatusForbidden)
+			return
+		} else {
+			log.Printf("%s: %v", p.name, err)
 			rw.WriteHeader(http.StatusForbidden)
 			return
 		}
 	}
 
-	p.next.ServeHTTP(rw, req)
 }
 
 // GetRemoteIPs collects the remote IPs from the X-Forwarded-For and X-Real-IP headers.
@@ -86,11 +100,20 @@ func (p Plugin) GetRemoteIPs(req *http.Request) (ips []string) {
 	return
 }
 
+var (
+	ErrNotAllowed = errors.New("not allowed")
+	ErrPrivate    = errors.New("private address")
+)
+
 // CheckAllowed checks whether a given IP address is allowed according to the configured allowed countries.
-func (p Plugin) CheckAllowed(ip string) (bool, string, error) {
+func (p Plugin) CheckAllowed(ip string) (string, error) {
 	country, err := p.Lookup(ip)
 	if err != nil {
-		return false, "", fmt.Errorf("lookup of %s failed: %w", ip, err)
+		return "", fmt.Errorf("lookup of %s failed: %w", ip, err)
+	}
+
+	if country == "-" { // Private address
+		return country, ErrPrivate
 	}
 
 	var allowed bool
@@ -100,8 +123,11 @@ func (p Plugin) CheckAllowed(ip string) (bool, string, error) {
 			break
 		}
 	}
+	if !allowed {
+		return country, ErrNotAllowed
+	}
 
-	return allowed, country, nil
+	return country, nil
 }
 
 // Lookup queries the ip2location database for a given IP address.
