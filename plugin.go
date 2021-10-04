@@ -105,9 +105,8 @@ func (p Plugin) CheckAllowed(ip string) (string, error) {
 	if country == "-" { // Private address
 		if p.cfg.AllowPrivate {
 			return country, nil
-		} else {
-			return country, ErrNotAllowed
 		}
+		return country, ErrNotAllowed
 	}
 
 	var allowed bool
