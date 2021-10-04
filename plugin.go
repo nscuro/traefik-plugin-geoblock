@@ -48,11 +48,7 @@ func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for _, ip := range ips {
 		country, err := p.CheckAllowed(ip)
 		if err != nil {
-			if errors.Is(err, ErrPrivate) && p.cfg.AllowPrivate {
-				log.Printf("%s: allowed for private address %s", p.name, ip)
-				p.next.ServeHTTP(rw, req)
-				return
-			} else if errors.Is(err, ErrNotAllowed) {
+			if errors.Is(err, ErrNotAllowed) {
 				log.Printf("%s: access denied for %s (%s)", p.name, ip, country)
 				rw.WriteHeader(http.StatusForbidden)
 				return
@@ -97,10 +93,7 @@ func (p Plugin) GetRemoteIPs(req *http.Request) (ips []string) {
 	return
 }
 
-var (
-	ErrNotAllowed = errors.New("not allowed")
-	ErrPrivate    = errors.New("private address")
-)
+var ErrNotAllowed = errors.New("not allowed")
 
 // CheckAllowed checks whether a given IP address is allowed according to the configured allowed countries.
 func (p Plugin) CheckAllowed(ip string) (string, error) {
@@ -110,7 +103,11 @@ func (p Plugin) CheckAllowed(ip string) (string, error) {
 	}
 
 	if country == "-" { // Private address
-		return country, ErrPrivate
+		if p.cfg.AllowPrivate {
+			return country, nil
+		} else {
+			return country, ErrNotAllowed
+		}
 	}
 
 	var allowed bool
