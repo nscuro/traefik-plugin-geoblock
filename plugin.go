@@ -22,25 +22,23 @@ func CreateConfig() *Config {
 }
 
 type Plugin struct {
-	next             http.Handler
-	name             string
-	db               *ip2location.DB
-	allowedCountries []string
-	allowPrivate     bool
+	next http.Handler
+	name string
+	db   *ip2location.DB
+	cfg  *Config
 }
 
-func New(_ context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	db, err := ip2location.OpenDB(config.DatabaseFilePath)
+func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.Handler, error) {
+	db, err := ip2location.OpenDB(cfg.DatabaseFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
 	return &Plugin{
-		next:             next,
-		name:             name,
-		db:               db,
-		allowedCountries: config.AllowedCountries,
-		allowPrivate:     config.AllowPrivate,
+		next: next,
+		name: name,
+		db:   db,
+		cfg:  cfg,
 	}, nil
 }
 
@@ -53,7 +51,7 @@ func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			p.next.ServeHTTP(rw, req)
 			return
 		}
-		if errors.Is(err, ErrPrivate) && p.allowPrivate {
+		if errors.Is(err, ErrPrivate) && p.cfg.AllowPrivate {
 			log.Printf("%s: allowed for private address %s", p.name, ip)
 			p.next.ServeHTTP(rw, req)
 			return
@@ -117,7 +115,7 @@ func (p Plugin) CheckAllowed(ip string) (string, error) {
 	}
 
 	var allowed bool
-	for _, allowedCountry := range p.allowedCountries {
+	for _, allowedCountry := range p.cfg.AllowedCountries {
 		if allowedCountry == country {
 			allowed = true
 			break
