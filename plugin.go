@@ -47,25 +47,24 @@ func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	for _, ip := range ips {
 		country, err := p.CheckAllowed(ip)
-		if err == nil {
-			p.next.ServeHTTP(rw, req)
-			return
-		}
-		if errors.Is(err, ErrPrivate) && p.cfg.AllowPrivate {
-			log.Printf("%s: allowed for private address %s", p.name, ip)
-			p.next.ServeHTTP(rw, req)
-			return
-		} else if errors.Is(err, ErrNotAllowed) {
-			log.Printf("%s: access denied for %s (%s)", p.name, ip, country)
-			rw.WriteHeader(http.StatusForbidden)
-			return
-		} else {
-			log.Printf("%s: %v", p.name, err)
-			rw.WriteHeader(http.StatusForbidden)
-			return
+		if err != nil {
+			if errors.Is(err, ErrPrivate) && p.cfg.AllowPrivate {
+				log.Printf("%s: allowed for private address %s", p.name, ip)
+				p.next.ServeHTTP(rw, req)
+				return
+			} else if errors.Is(err, ErrNotAllowed) {
+				log.Printf("%s: access denied for %s (%s)", p.name, ip, country)
+				rw.WriteHeader(http.StatusForbidden)
+				return
+			} else {
+				log.Printf("%s: %v", p.name, err)
+				rw.WriteHeader(http.StatusForbidden)
+				return
+			}
 		}
 	}
 
+	p.next.ServeHTTP(rw, req)
 }
 
 // GetRemoteIPs collects the remote IPs from the X-Forwarded-For and X-Real-IP headers.
