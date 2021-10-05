@@ -12,6 +12,7 @@ import (
 )
 
 type Config struct {
+	Enabled          bool     `yaml:"enabled"`
 	DatabaseFilePath string   `yaml:"database_file"`
 	AllowedCountries []string `yaml:"allowed_countries"`
 	AllowPrivate     bool     `yaml:"allow_private"`
@@ -43,6 +44,11 @@ func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.H
 }
 
 func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if !p.cfg.Enabled {
+		p.next.ServeHTTP(rw, req)
+		return
+	}
+
 	ips := p.GetRemoteIPs(req)
 
 	for _, ip := range ips {

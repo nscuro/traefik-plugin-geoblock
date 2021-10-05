@@ -3,5 +3,7 @@ type: middleware
 import: github.com/nscuro/traefik-plugin-geoblock
 summary: Description of what my plugin is doing
 testData:
+  enabled: true
   database_file: IP2LOCATION-LITE-DB1.IPV6.BIN
   allowed_countries: [ "CH", "DE" ]
+  allow_private: true

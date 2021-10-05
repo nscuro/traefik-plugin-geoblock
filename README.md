@@ -21,6 +21,7 @@ http:
     geoblock:
       plugin:
         geoblock:
+          enabled: true
           database_file: /plugins-local/src/github.com/nscuro/traefik-plugin-geoblock/IP2LOCATION-LITE-DB1.IPV6.BIN
           allowed_countries: [ "AT", "CH", "DE" ]
           allow_private: true
