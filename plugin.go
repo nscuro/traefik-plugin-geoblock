@@ -1,4 +1,4 @@
-package geoblock
+package traefik_plugin_geoblock
 
 import (
 	"context"
