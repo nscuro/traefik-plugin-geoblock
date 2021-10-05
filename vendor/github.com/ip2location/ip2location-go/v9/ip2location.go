@@ -8,18 +8,12 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"math/big"
 	"net"
 	"os"
 	"strconv"
 )
-
-type DBReader interface {
-	io.ReadCloser
-	io.ReaderAt
-}
 
 type ip2locationmeta struct {
 	databasetype      uint8
@@ -338,7 +332,7 @@ func OpenDB(dbpath string) (*DB, error) {
 	return OpenDBWithReader(f)
 }
 
-// OpenDBWithReader takes a DBReader to the IP2Location BIN database file. It will read all the metadata required to
+// OpenDBWithReader takes a file to the IP2Location BIN database file. It will read all the metadata required to
 // be able to extract the embedded geolocation data, and return the underlining DB object.
 func OpenDBWithReader(reader *os.File) (*DB, error) {
 	var db = &DB{}

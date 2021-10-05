@@ -1,7 +1,7 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/ip2location/ip2location-go/v9 v9.1.0 h1:DVlKxIcjA7CsA0cgzbidwe6eKzpbkS313LsH9ceutxI=
-github.com/ip2location/ip2location-go/v9 v9.1.0/go.mod h1:s5SV6YZL10TpfPpXw//7fEJC65G/yH7Oh+Tjq9JcQEQ=
+github.com/nscuro/ip2location-go/v9 v9.1.1-0.20211005203335-3adfee683486 h1:eA4ZYX7/5pXJMWf4fm0UaOwA6VcIpRTKYMeQsRP4oWw=
+github.com/nscuro/ip2location-go/v9 v9.1.1-0.20211005203335-3adfee683486/go.mod h1:s5SV6YZL10TpfPpXw//7fEJC65G/yH7Oh+Tjq9JcQEQ=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

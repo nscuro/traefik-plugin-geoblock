@@ -18,7 +18,7 @@ func (n noopHandler) ServeHTTP(rw http.ResponseWriter, _ *http.Request) {
 
 func TestPlugin_ServeHTTP(t *testing.T) {
 	t.Run("Allowed", func(t *testing.T) {
-		cfg := &Config{DatabaseFilePath: dbFilePath, AllowedCountries: []string{"US"}}
+		cfg := &Config{Enabled: true, DatabaseFilePath: dbFilePath, AllowedCountries: []string{"US"}}
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, "geoblock")
 		require.NoError(t, err)
 
@@ -32,7 +32,7 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 	})
 
 	t.Run("AllowedPrivate", func(t *testing.T) {
-		cfg := &Config{DatabaseFilePath: dbFilePath, AllowedCountries: []string{}, AllowPrivate: true}
+		cfg := &Config{Enabled: true, DatabaseFilePath: dbFilePath, AllowedCountries: []string{}, AllowPrivate: true}
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, "geoblock")
 		require.NoError(t, err)
 
@@ -46,7 +46,7 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 	})
 
 	t.Run("Disallowed", func(t *testing.T) {
-		cfg := &Config{DatabaseFilePath: dbFilePath, AllowedCountries: []string{"DE"}}
+		cfg := &Config{Enabled: true, DatabaseFilePath: dbFilePath, AllowedCountries: []string{"DE"}}
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, "geoblock")
 		require.NoError(t, err)
 
@@ -60,7 +60,7 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 	})
 
 	t.Run("DisallowedPrivate", func(t *testing.T) {
-		cfg := &Config{DatabaseFilePath: dbFilePath, AllowedCountries: []string{}, AllowPrivate: false}
+		cfg := &Config{Enabled: true, DatabaseFilePath: dbFilePath, AllowedCountries: []string{}, AllowPrivate: false}
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, "geoblock")
 		require.NoError(t, err)
 

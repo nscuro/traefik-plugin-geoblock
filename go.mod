@@ -12,3 +12,5 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
+
+replace github.com/ip2location/ip2location-go/v9 => github.com/nscuro/ip2location-go/v9 v9.1.1-0.20211005203335-3adfee683486
