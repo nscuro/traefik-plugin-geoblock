@@ -12,10 +12,10 @@ import (
 )
 
 type Config struct {
-	Enabled          bool     `yaml:"enabled"`
-	DatabaseFilePath string   `yaml:"database_file"`
-	AllowedCountries []string `yaml:"allowed_countries"`
-	AllowPrivate     bool     `yaml:"allow_private"`
+	Enabled          bool     `json:"enabled"`
+	DatabaseFilePath string   `json:"database_file"`
+	AllowedCountries []string `json:"allowed_countries"`
+	AllowPrivate     bool     `json:"allow_private"`
 }
 
 func CreateConfig() *Config {
