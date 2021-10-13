@@ -5,10 +5,11 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/ip2location/ip2location-go/v9"
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/ip2location/ip2location-go/v9"
 )
 
 type Config struct {
@@ -55,11 +56,11 @@ func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		country, err := p.CheckAllowed(ip)
 		if err != nil {
 			if errors.Is(err, ErrNotAllowed) {
-				log.Printf("%s: access denied for %s (%s)", p.name, ip, country)
+				log.Printf("%s: %s - access denied for %s (%s)", p.name, req.Host, ip, country)
 				rw.WriteHeader(http.StatusForbidden)
 				return
 			} else {
-				log.Printf("%s: %v", p.name, err)
+				log.Printf("%s: %s - %v", p.name, req.Host, err)
 				rw.WriteHeader(http.StatusForbidden)
 				return
 			}
