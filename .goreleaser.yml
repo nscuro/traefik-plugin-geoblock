@@ -1,0 +1,29 @@
+project_name: traefik-plugin-geoblock
+
+before:
+  hooks:
+    # https://goreleaser.com/customization/build/#go-modules
+    - go mod tidy
+
+builds:
+  # traefik plugins are not built in advance, but interpreted by
+  # yaegi. Building plugins doesn't make sense, but we want to use
+  # the other goodies of GoReleaser.
+  - skip: true
+
+release:
+  prerelease: auto
+  extra_files:
+    - glob: ./bom.json
+
+milestones:
+  - name_template: "{{ .Tag }}"
+    close: true
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^Merge '
