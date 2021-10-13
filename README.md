@@ -1,5 +1,12 @@
 # traefik-plugin-geoblock
 
+[![Build Status](https://github.com/nscuro/traefik-plugin-geoblock/actions/workflows/ci.yml/badge.svg)](https://github.com/nscuro/traefik-plugin-geoblock/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nscuro/traefik-plugin-geoblock)](https://goreportcard.com/report/github.com/nscuro/traefik-plugin-geoblock)
+[![Latest GitHub release](https://img.shields.io/github/v/release/nscuro/traefik-plugin-geoblock?sort=semver)](https://github.com/nscuro/traefik-plugin-geoblock/releases/latest)
+[![License](https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg)](LICENSE)  
+
+*traefik-plugin-geoblock is a traefik plugin to whitelist requests based on geolocation*
+
 > This projects includes IP2Location LITE data available from [`lite.ip2location.com`](https://lite.ip2location.com/database/ip-country).
 
 ## Configuration
