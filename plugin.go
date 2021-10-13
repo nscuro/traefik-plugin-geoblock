@@ -40,7 +40,7 @@ func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.H
 		if gopath == "" {
 			gopath = build.Default.GOPATH
 		}
-		return nil, fmt.Errorf("failed to open database: %w (cwd: %s, gopath: %s, env: %#v, loc: %s)", err, cwd, gopath, os.Environ(), string(modLocation))
+		return nil, fmt.Errorf("failed to open database: %w (cwd: %s, gopath: %s, env: %#v)", err, cwd, gopath, os.Environ())
 	}
 
 	return &Plugin{
