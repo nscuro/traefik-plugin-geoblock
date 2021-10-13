@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/ip2location/ip2location-go/v9"
@@ -41,7 +40,6 @@ func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.H
 		if gopath == "" {
 			gopath = build.Default.GOPATH
 		}
-		modLocation, _ := exec.Command("find", "-name", "go.mod").CombinedOutput()
 		return nil, fmt.Errorf("failed to open database: %w (cwd: %s, gopath: %s, env: %#v, loc: %s)", err, cwd, gopath, os.Environ(), string(modLocation))
 	}
 
