@@ -5,8 +5,10 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"go/build"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/ip2location/ip2location-go/v9"
@@ -33,7 +35,8 @@ type Plugin struct {
 func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.Handler, error) {
 	db, err := ip2location.OpenDB(cfg.DatabaseFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		_, cwd := os.Getwd()
+		return nil, fmt.Errorf("failed to open database: %w (cwd: %s, gopath: %s)", err, cwd, build.Default.GOPATH)
 	}
 
 	return &Plugin{
