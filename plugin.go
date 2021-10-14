@@ -31,6 +31,13 @@ type Plugin struct {
 }
 
 func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.Handler, error) {
+	if next == nil {
+		return nil, fmt.Errorf("no next handler provided")
+	}
+	if cfg == nil {
+		return nil, fmt.Errorf("no config provided")
+	}
+
 	if !cfg.Enabled {
 		log.Printf("%s: disabled", name)
 
