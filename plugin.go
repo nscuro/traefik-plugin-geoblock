@@ -5,10 +5,8 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"go/build"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/ip2location/ip2location-go/v9"
@@ -33,14 +31,24 @@ type Plugin struct {
 }
 
 func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.Handler, error) {
+	if !cfg.Enabled {
+		log.Printf("%s: disabled", name)
+
+		return &Plugin{
+			next: next,
+			name: name,
+			db:   nil,
+			cfg:  cfg,
+		}, nil
+	}
+
+	if cfg.DatabaseFilePath == "" {
+		return nil, fmt.Errorf("no databaseFilePath configured")
+	}
+
 	db, err := ip2location.OpenDB(cfg.DatabaseFilePath)
 	if err != nil {
-		cwd, _ := os.Getwd()
-		gopath := os.Getenv("GOPATH")
-		if gopath == "" {
-			gopath = build.Default.GOPATH
-		}
-		return nil, fmt.Errorf("failed to open database: %w (cwd: %s, gopath: %s, env: %#v)", err, cwd, gopath, os.Environ())
+		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
 	return &Plugin{
