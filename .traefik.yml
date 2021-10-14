@@ -3,7 +3,10 @@ type: middleware
 import: github.com/nscuro/traefik-plugin-geoblock
 summary: traefik plugin to whitelist requests based on geolocation
 testData:
-  enabled: true
-  databaseFilePath: /root/go/src/github.com/nscuro/traefik-plugin-geoblock/IP2LOCATION-LITE-DB1.IPV6.BIN
-  allowedCountries: [ "CH", "DE" ]
-  allowPrivate: true
+  # It doesn't appear to be possible to get the pilot plugin analyzer
+  # to load local files. To prevent errors, the plugin is disabled here.
+  # This will cause the plugin to not attempt to load the database file.
+  enabled: false
+  # databaseFilePath: IP2LOCATION-LITE-DB1.IPV6.BIN
+  # allowedCountries: [ "CH", "DE" ]
+  # allowPrivate: true
