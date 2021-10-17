@@ -24,10 +24,12 @@ func CreateConfig() *Config {
 }
 
 type Plugin struct {
-	next http.Handler
-	name string
-	db   *ip2location.DB
-	cfg  *Config
+	next             http.Handler
+	name             string
+	db               *ip2location.DB
+	enabled          bool
+	allowedCountries []string
+	allowPrivate     bool
 }
 
 func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.Handler, error) {
@@ -45,7 +47,6 @@ func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.H
 			next: next,
 			name: name,
 			db:   nil,
-			cfg:  cfg,
 		}, nil
 	}
 
@@ -59,15 +60,17 @@ func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.H
 	}
 
 	return &Plugin{
-		next: next,
-		name: name,
-		db:   db,
-		cfg:  cfg,
+		next:             next,
+		name:             name,
+		db:               db,
+		enabled:          cfg.Enabled,
+		allowedCountries: cfg.AllowedCountries,
+		allowPrivate:     cfg.AllowPrivate,
 	}, nil
 }
 
 func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if !p.cfg.Enabled {
+	if !p.enabled {
 		p.next.ServeHTTP(rw, req)
 		return
 	}
@@ -132,14 +135,14 @@ func (p Plugin) CheckAllowed(ip string) (string, error) {
 	}
 
 	if country == "-" { // Private address
-		if p.cfg.AllowPrivate {
+		if p.allowPrivate {
 			return country, nil
 		}
 		return country, ErrNotAllowed
 	}
 
 	var allowed bool
-	for _, allowedCountry := range p.cfg.AllowedCountries {
+	for _, allowedCountry := range p.allowedCountries {
 		if allowedCountry == country {
 			allowed = true
 			break
