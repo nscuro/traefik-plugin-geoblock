@@ -69,7 +69,7 @@ func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.H
 	}, nil
 }
 
-func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (p *Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if !p.enabled {
 		p.next.ServeHTTP(rw, req)
 		return
@@ -96,7 +96,7 @@ func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 // GetRemoteIPs collects the remote IPs from the X-Forwarded-For and X-Real-IP headers.
-func (p Plugin) GetRemoteIPs(req *http.Request) (ips []string) {
+func (p *Plugin) GetRemoteIPs(req *http.Request) (ips []string) {
 	ipMap := make(map[string]struct{})
 
 	if xff := req.Header.Get("x-forwarded-for"); xff != "" {
@@ -128,7 +128,7 @@ func (p Plugin) GetRemoteIPs(req *http.Request) (ips []string) {
 var ErrNotAllowed = errors.New("not allowed")
 
 // CheckAllowed checks whether a given IP address is allowed according to the configured allowed countries.
-func (p Plugin) CheckAllowed(ip string) (string, error) {
+func (p *Plugin) CheckAllowed(ip string) (string, error) {
 	country, err := p.Lookup(ip)
 	if err != nil {
 		return "", fmt.Errorf("lookup of %s failed: %w", ip, err)
@@ -156,7 +156,7 @@ func (p Plugin) CheckAllowed(ip string) (string, error) {
 }
 
 // Lookup queries the ip2location database for a given IP address.
-func (p Plugin) Lookup(ip string) (string, error) {
+func (p *Plugin) Lookup(ip string) (string, error) {
 	record, err := p.db.Get_country_short(ip)
 	if err != nil {
 		return "", err
