@@ -12,6 +12,8 @@ import (
 	"github.com/ip2location/ip2location-go/v9"
 )
 
+//go:generate go run ./tools/dbdownload/main.go -o ./IP2LOCATION-LITE-DB1.IPV6.BIN
+
 type Config struct {
 	Enabled          bool
 	DatabaseFilePath string
