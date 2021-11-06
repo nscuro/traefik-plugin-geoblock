@@ -62,7 +62,7 @@ func main() {
 			}
 			defer fileReader.Close()
 
-			_, err = io.Copy(tmpFile, fileReader)
+			_, err = io.Copy(tmpFile, fileReader) // #nosec: G110
 			if err != nil {
 				log.Fatal(err)
 			}
