@@ -13,4 +13,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )
 
-replace github.com/ip2location/ip2location-go/v9 => github.com/nscuro/ip2location-go/v9 v9.1.1-0.20211005203335-3adfee683486
+replace github.com/ip2location/ip2location-go/v9 => github.com/nscuro/ip2location-go/v9 v9.2.0
