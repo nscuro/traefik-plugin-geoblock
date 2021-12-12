@@ -1,7 +1,7 @@
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/ip2location/ip2location-go/v9 v9.1.0 => github.com/nscuro/ip2location-go/v9 v9.1.1-0.20211005203335-3adfee683486
+# github.com/ip2location/ip2location-go/v9 v9.2.0
 ## explicit; go 1.14
 github.com/ip2location/ip2location-go/v9
 # github.com/pmezard/go-difflib v1.0.0
@@ -14,4 +14,3 @@ github.com/stretchr/testify/require
 # gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 ## explicit
 gopkg.in/yaml.v3
-# github.com/ip2location/ip2location-go/v9 => github.com/nscuro/ip2location-go/v9 v9.1.1-0.20211005203335-3adfee683486
