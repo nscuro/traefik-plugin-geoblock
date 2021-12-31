@@ -32,7 +32,7 @@ experimental:
   plugins:
     geoblock:
       moduleName: github.com/nscuro/traefik-plugin-geoblock
-      version: v0.2.0
+      version: v0.3.0
 ```
 
 ### Dynamic

@@ -10,3 +10,4 @@ testData:
   # databaseFilePath: IP2LOCATION-LITE-DB1.IPV6.BIN
   # allowedCountries: [ "CH", "DE" ]
   # allowPrivate: true
+  # disallowedStatusCode: 403
