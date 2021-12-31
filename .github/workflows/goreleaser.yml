@@ -21,7 +21,6 @@ jobs:
         uses: CycloneDX/gh-gomod-generate-sbom@v1
         with:
           version: v1
-          args: mod -licenses -json -output bom.json
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:

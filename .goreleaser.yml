@@ -1,10 +1,5 @@
 project_name: traefik-plugin-geoblock
 
-before:
-  hooks:
-    # https://goreleaser.com/customization/build/#go-modules
-    - go mod tidy
-
 builds:
   # traefik plugins are not built in advance, but interpreted by
   # yaegi. Building plugins doesn't make sense, but we want to use
@@ -13,8 +8,16 @@ builds:
 
 release:
   prerelease: auto
-  extra_files:
-    - glob: ./bom.json
+
+source:
+  enabled: true
+
+sboms:
+  - artifacts: source
+    documents:
+      - "${artifact}.cdx.sbom"
+    cmd: cyclonedx-gomod
+    args: ["mod", "-licenses", "-json", "-output", "$document", "./.."]
 
 milestones:
   - name_template: "{{ .Tag }}"
