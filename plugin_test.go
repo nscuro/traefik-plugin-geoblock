@@ -45,8 +45,14 @@ func TestNew(t *testing.T) {
 		require.Nil(t, plugin)
 	})
 
+	t.Run("InvalidDisallowedStatusCode", func(t *testing.T) {
+		plugin, err := New(context.TODO(), &noopHandler{}, &Config{Enabled: true, DisallowedStatusCode: -1}, pluginName)
+		require.Error(t, err)
+		require.Nil(t, plugin)
+	})
+
 	t.Run("NoDatabaseFilePath", func(t *testing.T) {
-		plugin, err := New(context.TODO(), &noopHandler{}, &Config{Enabled: true}, pluginName)
+		plugin, err := New(context.TODO(), &noopHandler{}, &Config{Enabled: true, DisallowedStatusCode: http.StatusForbidden}, pluginName)
 		require.Error(t, err)
 		require.Nil(t, plugin)
 	})
@@ -54,7 +60,13 @@ func TestNew(t *testing.T) {
 
 func TestPlugin_ServeHTTP(t *testing.T) {
 	t.Run("Allowed", func(t *testing.T) {
-		cfg := &Config{Enabled: true, DatabaseFilePath: dbFilePath, AllowedCountries: []string{"US"}}
+		cfg := &Config{
+			Enabled:              true,
+			DatabaseFilePath:     dbFilePath,
+			AllowedCountries:     []string{"US"},
+			DisallowedStatusCode: http.StatusOK,
+		}
+
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
 		require.NoError(t, err)
 
@@ -68,7 +80,14 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 	})
 
 	t.Run("AllowedPrivate", func(t *testing.T) {
-		cfg := &Config{Enabled: true, DatabaseFilePath: dbFilePath, AllowedCountries: []string{}, AllowPrivate: true}
+		cfg := &Config{
+			Enabled:              true,
+			DatabaseFilePath:     dbFilePath,
+			AllowedCountries:     []string{},
+			AllowPrivate:         true,
+			DisallowedStatusCode: http.StatusOK,
+		}
+
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
 		require.NoError(t, err)
 
@@ -82,7 +101,13 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 	})
 
 	t.Run("Disallowed", func(t *testing.T) {
-		cfg := &Config{Enabled: true, DatabaseFilePath: dbFilePath, AllowedCountries: []string{"DE"}}
+		cfg := &Config{
+			Enabled:              true,
+			DatabaseFilePath:     dbFilePath,
+			AllowedCountries:     []string{"DE"},
+			DisallowedStatusCode: http.StatusForbidden,
+		}
+
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
 		require.NoError(t, err)
 
@@ -96,7 +121,14 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 	})
 
 	t.Run("DisallowedPrivate", func(t *testing.T) {
-		cfg := &Config{Enabled: true, DatabaseFilePath: dbFilePath, AllowedCountries: []string{}, AllowPrivate: false}
+		cfg := &Config{
+			Enabled:              true,
+			DatabaseFilePath:     dbFilePath,
+			AllowedCountries:     []string{},
+			AllowPrivate:         false,
+			DisallowedStatusCode: http.StatusForbidden,
+		}
+
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
 		require.NoError(t, err)
 

@@ -14,32 +14,37 @@ import (
 
 //go:generate go run ./tools/dbdownload/main.go -o ./IP2LOCATION-LITE-DB1.IPV6.BIN
 
+// Config defines the plugin configuration.
 type Config struct {
-	Enabled          bool
-	DatabaseFilePath string
-	AllowedCountries []string
-	AllowPrivate     bool
+	Enabled              bool     // Enable this plugin?
+	DatabaseFilePath     string   // Path to ip2location database file
+	AllowedCountries     []string // Whitelist of countries to allow (ISO 3166-1 alpha-2)
+	AllowPrivate         bool     // Allow requests from private / internal networks?
+	DisallowedStatusCode int      // HTTP status code to return for disallowed requests
 }
 
+// CreateConfig creates the default plugin configuration.
 func CreateConfig() *Config {
-	return &Config{}
+	return &Config{DisallowedStatusCode: http.StatusForbidden}
 }
 
 type Plugin struct {
-	next             http.Handler
-	name             string
-	db               *ip2location.DB
-	enabled          bool
-	allowedCountries []string
-	allowPrivate     bool
+	next                 http.Handler
+	name                 string
+	db                   *ip2location.DB
+	enabled              bool
+	allowedCountries     []string
+	allowPrivate         bool
+	disallowedStatusCode int
 }
 
+// New creates a new plugin instance.
 func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.Handler, error) {
 	if next == nil {
-		return nil, fmt.Errorf("no next handler provided")
+		return nil, fmt.Errorf("%s: no next handler provided", name)
 	}
 	if cfg == nil {
-		return nil, fmt.Errorf("no config provided")
+		return nil, fmt.Errorf("%s: no config provided", name)
 	}
 
 	if !cfg.Enabled {
@@ -52,43 +57,48 @@ func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.H
 		}, nil
 	}
 
+	if http.StatusText(cfg.DisallowedStatusCode) == "" {
+		return nil, fmt.Errorf("%s: %d is not a valid http status code", name, cfg.DisallowedStatusCode)
+	}
+
 	if cfg.DatabaseFilePath == "" {
-		return nil, fmt.Errorf("no databaseFilePath configured")
+		return nil, fmt.Errorf("%s: no database file path configured", name)
 	}
 
 	db, err := ip2location.OpenDB(cfg.DatabaseFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		return nil, fmt.Errorf("%s: failed to open database: %w", name, err)
 	}
 
 	return &Plugin{
-		next:             next,
-		name:             name,
-		db:               db,
-		enabled:          cfg.Enabled,
-		allowedCountries: cfg.AllowedCountries,
-		allowPrivate:     cfg.AllowPrivate,
+		next:                 next,
+		name:                 name,
+		db:                   db,
+		enabled:              cfg.Enabled,
+		allowedCountries:     cfg.AllowedCountries,
+		allowPrivate:         cfg.AllowPrivate,
+		disallowedStatusCode: cfg.DisallowedStatusCode,
 	}, nil
 }
 
-func (p *Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+// ServeHTTP implements the http.Handler interface.
+func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if !p.enabled {
 		p.next.ServeHTTP(rw, req)
 		return
 	}
 
-	ips := p.GetRemoteIPs(req)
-
-	for _, ip := range ips {
-		country, err := p.CheckAllowed(ip)
+	for _, ip := range p.GetRemoteIPs(req) {
+		err := p.CheckAllowed(ip)
 		if err != nil {
-			if errors.Is(err, ErrNotAllowed) {
-				log.Printf("%s: %s - access denied for %s (%s)", p.name, req.Host, ip, country)
-				rw.WriteHeader(http.StatusForbidden)
+			var notAllowedErr *NotAllowedError
+			if errors.As(err, &notAllowedErr) {
+				log.Printf("%s: %v", p.name, err)
+				rw.WriteHeader(p.disallowedStatusCode)
 				return
 			} else {
 				log.Printf("%s: %s - %v", p.name, req.Host, err)
-				rw.WriteHeader(http.StatusForbidden)
+				rw.WriteHeader(p.disallowedStatusCode)
 				return
 			}
 		}
@@ -98,8 +108,8 @@ func (p *Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 // GetRemoteIPs collects the remote IPs from the X-Forwarded-For and X-Real-IP headers.
-func (p *Plugin) GetRemoteIPs(req *http.Request) (ips []string) {
-	ipMap := make(map[string]struct{})
+func (p Plugin) GetRemoteIPs(req *http.Request) []string {
+	uniqIPs := make(map[string]struct{})
 
 	if xff := req.Header.Get("x-forwarded-for"); xff != "" {
 		for _, ip := range strings.Split(xff, ",") {
@@ -107,7 +117,7 @@ func (p *Plugin) GetRemoteIPs(req *http.Request) (ips []string) {
 			if ip == "" {
 				continue
 			}
-			ipMap[ip] = struct{}{}
+			uniqIPs[ip] = struct{}{}
 		}
 	}
 	if xri := req.Header.Get("x-real-ip"); xri != "" {
@@ -116,31 +126,53 @@ func (p *Plugin) GetRemoteIPs(req *http.Request) (ips []string) {
 			if ip == "" {
 				continue
 			}
-			ipMap[ip] = struct{}{}
+			uniqIPs[ip] = struct{}{}
 		}
 	}
 
-	for ip := range ipMap {
+	var ips []string
+	for ip := range uniqIPs {
 		ips = append(ips, ip)
 	}
 
-	return
+	return ips
 }
 
-var ErrNotAllowed = errors.New("not allowed")
+type NotAllowedError struct {
+	Country string
+	IP      string
+	Reason  string
+}
+
+func (e NotAllowedError) Error() (err string) {
+	if e.Country == "" {
+		err = fmt.Sprintf("%s not allowed", e.IP)
+	} else {
+		err = fmt.Sprintf("%s (%s) not allowed", e.IP, e.Country)
+	}
+	if e.Reason != "" {
+		err = fmt.Sprintf("%s: %s", err, e.Reason)
+	}
+
+	return err
+}
 
 // CheckAllowed checks whether a given IP address is allowed according to the configured allowed countries.
-func (p *Plugin) CheckAllowed(ip string) (string, error) {
+func (p Plugin) CheckAllowed(ip string) error {
 	country, err := p.Lookup(ip)
 	if err != nil {
-		return "", fmt.Errorf("lookup of %s failed: %w", ip, err)
+		return fmt.Errorf("lookup of %s failed: %w", ip, err)
 	}
 
 	if country == "-" { // Private address
 		if p.allowPrivate {
-			return country, nil
+			return nil
 		}
-		return country, ErrNotAllowed
+
+		return &NotAllowedError{
+			IP:     ip,
+			Reason: "private address",
+		}
 	}
 
 	var allowed bool
@@ -151,14 +183,17 @@ func (p *Plugin) CheckAllowed(ip string) (string, error) {
 		}
 	}
 	if !allowed {
-		return country, ErrNotAllowed
+		return &NotAllowedError{
+			Country: country,
+			IP:      ip,
+		}
 	}
 
-	return country, nil
+	return nil
 }
 
 // Lookup queries the ip2location database for a given IP address.
-func (p *Plugin) Lookup(ip string) (string, error) {
+func (p Plugin) Lookup(ip string) (string, error) {
 	record, err := p.db.Get_country_short(ip)
 	if err != nil {
 		return "", err

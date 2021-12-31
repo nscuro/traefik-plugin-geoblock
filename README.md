@@ -43,13 +43,14 @@ http:
     geoblock:
       plugin:
         geoblock:
-          # Whether or not to enable geoblocking.
+          # Enable this plugin?
           enabled: true
-          # Path to the ip2location database.
+          # Path to ip2location database file
           databaseFilePath: /plugins-local/src/github.com/nscuro/traefik-plugin-geoblock/IP2LOCATION-LITE-DB1.IPV6.BIN
-          # Countries to allow requests from, using ISO 3166-1 alpha-2 codes.
-          # See https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2#Officially_assigned_code_elements
+          # Whitelist of countries to allow (ISO 3166-1 alpha-2)
           allowedCountries: [ "AT", "CH", "DE" ]
-          # Whether or not requests from private networks should be allowed.
+          # Allow requests from private / internal networks?
           allowPrivate: true
+          # HTTP status code to return for disallowed requests (default: 403)
+          disallowedStatusCode: 204
 ```
