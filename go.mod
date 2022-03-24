@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/ip2location/ip2location-go/v9 v9.2.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 )
 
 require (
