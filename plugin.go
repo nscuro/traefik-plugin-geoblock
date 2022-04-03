@@ -91,7 +91,7 @@ func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for _, ip := range p.GetRemoteIPs(req) {
 		err := p.CheckAllowed(ip)
 		if err != nil {
-			var notAllowedErr *NotAllowedError
+			var notAllowedErr NotAllowedError
 			if errors.As(err, &notAllowedErr) {
 				log.Printf("%s: %v", p.name, err)
 				rw.WriteHeader(p.disallowedStatusCode)
@@ -169,7 +169,7 @@ func (p Plugin) CheckAllowed(ip string) error {
 			return nil
 		}
 
-		return &NotAllowedError{
+		return NotAllowedError{
 			IP:     ip,
 			Reason: "private address",
 		}
@@ -183,7 +183,7 @@ func (p Plugin) CheckAllowed(ip string) error {
 		}
 	}
 	if !allowed {
-		return &NotAllowedError{
+		return NotAllowedError{
 			Country: country,
 			IP:      ip,
 		}
