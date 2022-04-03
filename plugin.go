@@ -89,18 +89,16 @@ func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	for _, ip := range p.GetRemoteIPs(req) {
-		err := p.CheckAllowed(ip)
+		allowed, err := p.CheckAllowed(ip)
 		if err != nil {
-			var notAllowedErr NotAllowedError
-			if errors.As(err, &notAllowedErr) {
-				log.Printf("%s: %v", p.name, err)
-				rw.WriteHeader(p.disallowedStatusCode)
-				return
-			} else {
-				log.Printf("%s: %s - %v", p.name, req.Host, err)
-				rw.WriteHeader(p.disallowedStatusCode)
-				return
-			}
+			log.Printf("%s: %s - %v", p.name, req.Host, err)
+			rw.WriteHeader(p.disallowedStatusCode)
+			return
+		}
+		if !allowed {
+			log.Printf("%s: %v", p.name, err)
+			rw.WriteHeader(p.disallowedStatusCode)
+			return
 		}
 	}
 
@@ -138,41 +136,19 @@ func (p Plugin) GetRemoteIPs(req *http.Request) []string {
 	return ips
 }
 
-type NotAllowedError struct {
-	Country string
-	IP      string
-	Reason  string
-}
-
-func (e NotAllowedError) Error() (err string) {
-	if e.Country == "" {
-		err = fmt.Sprintf("%s not allowed", e.IP)
-	} else {
-		err = fmt.Sprintf("%s (%s) not allowed", e.IP, e.Country)
-	}
-	if e.Reason != "" {
-		err = fmt.Sprintf("%s: %s", err, e.Reason)
-	}
-
-	return err
-}
-
 // CheckAllowed checks whether a given IP address is allowed according to the configured allowed countries.
-func (p Plugin) CheckAllowed(ip string) error {
+func (p Plugin) CheckAllowed(ip string) (bool, error) {
 	country, err := p.Lookup(ip)
 	if err != nil {
-		return fmt.Errorf("lookup of %s failed: %w", ip, err)
+		return false, fmt.Errorf("lookup of %s failed: %w", ip, err)
 	}
 
 	if country == "-" { // Private address
 		if p.allowPrivate {
-			return nil
+			return true, nil
 		}
 
-		return NotAllowedError{
-			IP:     ip,
-			Reason: "private address",
-		}
+		return false, nil
 	}
 
 	var allowed bool
@@ -183,13 +159,10 @@ func (p Plugin) CheckAllowed(ip string) error {
 		}
 	}
 	if !allowed {
-		return NotAllowedError{
-			Country: country,
-			IP:      ip,
-		}
+		return false, nil
 	}
 
-	return nil
+	return true, nil
 }
 
 // Lookup queries the ip2location database for a given IP address.
