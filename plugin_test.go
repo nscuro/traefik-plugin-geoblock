@@ -175,3 +175,54 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 		}
 	})
 }
+
+func TestPlugin_Lookup(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		cfg := &Config{
+			Enabled:              true,
+			DatabaseFilePath:     dbFilePath,
+			AllowedCountries:     []string{},
+			AllowPrivate:         false,
+			DisallowedStatusCode: http.StatusForbidden,
+		}
+
+		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
+		if err != nil {
+			t.Errorf("expected no error, but got: %v", err)
+		}
+
+		country, err := plugin.(*Plugin).Lookup("8.8.8.8")
+		if err != nil {
+			t.Errorf("expected no error, but got: %v", err)
+		}
+		if country != "US" {
+			t.Errorf("expected country to be %s, but got: %s", "US", country)
+		}
+	})
+
+	t.Run("Invalid", func(t *testing.T) {
+		cfg := &Config{
+			Enabled:              true,
+			DatabaseFilePath:     dbFilePath,
+			AllowedCountries:     []string{},
+			AllowPrivate:         false,
+			DisallowedStatusCode: http.StatusForbidden,
+		}
+
+		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
+		if err != nil {
+			t.Errorf("expected no error, but got: %v", err)
+		}
+
+		country, err := plugin.(*Plugin).Lookup("foobar")
+		if err == nil {
+			t.Errorf("expected error, but got none")
+		}
+		if err.Error() != "Invalid IP address." {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if country != "" {
+			t.Errorf("expected country to be empty, but was: %s", country)
+		}
+	})
+}

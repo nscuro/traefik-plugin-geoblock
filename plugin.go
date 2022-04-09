@@ -89,14 +89,14 @@ func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	for _, ip := range p.GetRemoteIPs(req) {
-		allowed, err := p.CheckAllowed(ip)
+		allowed, country, err := p.CheckAllowed(ip)
 		if err != nil {
-			log.Printf("%s: %s - %v", p.name, req.Host, err)
+			log.Printf("%s: [%s %s %s] - %v", p.name, req.Host, req.Method, req.URL.Path, err)
 			rw.WriteHeader(p.disallowedStatusCode)
 			return
 		}
 		if !allowed {
-			log.Printf("%s: %v", p.name, err)
+			log.Printf("%s: [%s %s %s] blocked request from %s", p.name, req.Host, req.Method, req.URL.Path, country)
 			rw.WriteHeader(p.disallowedStatusCode)
 			return
 		}
@@ -137,18 +137,18 @@ func (p Plugin) GetRemoteIPs(req *http.Request) []string {
 }
 
 // CheckAllowed checks whether a given IP address is allowed according to the configured allowed countries.
-func (p Plugin) CheckAllowed(ip string) (bool, error) {
+func (p Plugin) CheckAllowed(ip string) (bool, string, error) {
 	country, err := p.Lookup(ip)
 	if err != nil {
-		return false, fmt.Errorf("lookup of %s failed: %w", ip, err)
+		return false, "", fmt.Errorf("lookup of %s failed: %w", ip, err)
 	}
 
 	if country == "-" { // Private address
 		if p.allowPrivate {
-			return true, nil
+			return true, ip, nil
 		}
 
-		return false, nil
+		return false, ip, nil
 	}
 
 	var allowed bool
@@ -159,10 +159,10 @@ func (p Plugin) CheckAllowed(ip string) (bool, error) {
 		}
 	}
 	if !allowed {
-		return false, nil
+		return false, country, nil
 	}
 
-	return true, nil
+	return true, country, nil
 }
 
 // Lookup queries the ip2location database for a given IP address.
