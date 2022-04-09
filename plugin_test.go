@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -23,38 +21,58 @@ func (n noopHandler) ServeHTTP(rw http.ResponseWriter, _ *http.Request) {
 func TestNew(t *testing.T) {
 	t.Run("Disabled", func(t *testing.T) {
 		plugin, err := New(context.TODO(), &noopHandler{}, &Config{Enabled: false}, pluginName)
-		require.NoError(t, err)
+		if err != nil {
+			t.Errorf("expected no error, but got: %v", err)
+		}
 
 		req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
 
 		rr := httptest.NewRecorder()
 		plugin.ServeHTTP(rr, req)
 
-		require.Equal(t, http.StatusTeapot, rr.Code)
+		if rr.Code != http.StatusTeapot {
+			t.Errorf("expected status code %d, but got: %d", http.StatusTeapot, rr.Code)
+		}
 	})
 
 	t.Run("NoNextHandler", func(t *testing.T) {
 		plugin, err := New(context.TODO(), nil, &Config{Enabled: true}, pluginName)
-		require.Error(t, err)
-		require.Nil(t, plugin)
+		if err == nil {
+			t.Errorf("expected error, but got none")
+		}
+		if plugin != nil {
+			t.Error("expected plugin to be nil, but is not")
+		}
 	})
 
 	t.Run("NoConfig", func(t *testing.T) {
 		plugin, err := New(context.TODO(), &noopHandler{}, nil, pluginName)
-		require.Error(t, err)
-		require.Nil(t, plugin)
+		if err == nil {
+			t.Errorf("expected error, but got none")
+		}
+		if plugin != nil {
+			t.Error("expected plugin to be nil, but is not")
+		}
 	})
 
 	t.Run("InvalidDisallowedStatusCode", func(t *testing.T) {
 		plugin, err := New(context.TODO(), &noopHandler{}, &Config{Enabled: true, DisallowedStatusCode: -1}, pluginName)
-		require.Error(t, err)
-		require.Nil(t, plugin)
+		if err == nil {
+			t.Errorf("expected error, but got none")
+		}
+		if plugin != nil {
+			t.Error("expected plugin to be nil, but is not")
+		}
 	})
 
 	t.Run("NoDatabaseFilePath", func(t *testing.T) {
 		plugin, err := New(context.TODO(), &noopHandler{}, &Config{Enabled: true, DisallowedStatusCode: http.StatusForbidden}, pluginName)
-		require.Error(t, err)
-		require.Nil(t, plugin)
+		if err == nil {
+			t.Errorf("expected error, but got none")
+		}
+		if plugin != nil {
+			t.Error("expected plugin to be nil, but is not")
+		}
 	})
 }
 
@@ -68,7 +86,9 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 		}
 
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
-		require.NoError(t, err)
+		if err != nil {
+			t.Errorf("expected no error, but got: %v", err)
+		}
 
 		req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
 		req.Header.Set("X-Real-IP", "1.1.1.1")
@@ -76,7 +96,9 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 		rr := httptest.NewRecorder()
 		plugin.ServeHTTP(rr, req)
 
-		require.Equal(t, http.StatusTeapot, rr.Code)
+		if rr.Code != http.StatusTeapot {
+			t.Errorf("expected status code %d, but got: %d", http.StatusTeapot, rr.Code)
+		}
 	})
 
 	t.Run("AllowedPrivate", func(t *testing.T) {
@@ -89,7 +111,9 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 		}
 
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
-		require.NoError(t, err)
+		if err != nil {
+			t.Errorf("expected no error, but got: %v", err)
+		}
 
 		req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
 		req.Header.Set("X-Real-IP", "192.168.178.66")
@@ -97,7 +121,9 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 		rr := httptest.NewRecorder()
 		plugin.ServeHTTP(rr, req)
 
-		require.Equal(t, http.StatusTeapot, rr.Code)
+		if rr.Code != http.StatusTeapot {
+			t.Errorf("expected status code %d, but got: %d", http.StatusTeapot, rr.Code)
+		}
 	})
 
 	t.Run("Disallowed", func(t *testing.T) {
@@ -109,7 +135,9 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 		}
 
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
-		require.NoError(t, err)
+		if err != nil {
+			t.Errorf("expected no error, but got: %v", err)
+		}
 
 		req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
 		req.Header.Set("X-Real-IP", "1.1.1.1")
@@ -117,7 +145,9 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 		rr := httptest.NewRecorder()
 		plugin.ServeHTTP(rr, req)
 
-		require.Equal(t, http.StatusForbidden, rr.Code)
+		if rr.Code != http.StatusForbidden {
+			t.Errorf("expected status code %d, but got: %d", http.StatusForbidden, rr.Code)
+		}
 	})
 
 	t.Run("DisallowedPrivate", func(t *testing.T) {
@@ -130,7 +160,9 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 		}
 
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
-		require.NoError(t, err)
+		if err != nil {
+			t.Errorf("expected no error, but got: %v", err)
+		}
 
 		req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
 		req.Header.Set("X-Real-IP", "192.168.178.66")
@@ -138,6 +170,8 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 		rr := httptest.NewRecorder()
 		plugin.ServeHTTP(rr, req)
 
-		require.Equal(t, http.StatusForbidden, rr.Code)
+		if rr.Code != http.StatusForbidden {
+			t.Errorf("expected status code %d, but got: %d", http.StatusForbidden, rr.Code)
+		}
 	})
 }

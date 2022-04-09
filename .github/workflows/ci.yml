@@ -27,12 +27,21 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    env:
+      GOPATH: ${{ github.workspace }}
+    defaults:
+      run:
+        working-directory: ${{ env.GOPATH }}/src/${{ github.repository }}
     steps:
       - name: Setup Go
         uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab # tag=v3
         with:
           go-version: "1.17"
+      - name: Install yaegi
+        run: go install -v github.com/traefik/yaegi/cmd/yaegi@v0.11.3
       - name: Checkout Repository
         uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846 # tag=v3
+        with:
+          path: ${{ env.GOPATH }}/src/${{ github.repository }}
       - name: Test
-        run: make test
+        run: make test-yaegi
