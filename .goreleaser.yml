@@ -24,9 +24,21 @@ milestones:
     close: true
 
 changelog:
+  use: github
   sort: asc
+  groups:
+  - title: Features
+    regexp: "^.*feat[(\\w)]*:+.*$"
+    order: 0
+  - title: Fixes
+    regexp: "^.*fix[(\\w)]*:+.*$"
+    order: 1
+  - title: Documentation
+    regexp: "^.*docs[(\\w)]*:+.*$"
+    order: 2
+  - title: Others
+    order: 999
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - '^Merge '
+    - '^test:'
+    - '^Merge '
