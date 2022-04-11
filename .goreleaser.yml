@@ -1,10 +1,10 @@
 project_name: traefik-plugin-geoblock
 
 builds:
-  # traefik plugins are not built in advance, but interpreted by
-  # yaegi. Building plugins doesn't make sense, but we want to use
-  # the other goodies of GoReleaser.
-  - skip: true
+# traefik plugins are not built in advance, but interpreted by
+# yaegi. Building plugins doesn't make sense, but we want to use
+# the other goodies of GoReleaser.
+- skip: true
 
 release:
   prerelease: auto
@@ -13,15 +13,15 @@ source:
   enabled: true
 
 sboms:
-  - artifacts: source
-    documents:
-      - "${artifact}.cdx.sbom"
-    cmd: cyclonedx-gomod
-    args: ["mod", "-licenses", "-json", "-output", "$document", "./.."]
+- artifacts: source
+  documents:
+  - "${artifact}.cdx.sbom"
+  cmd: cyclonedx-gomod
+  args: [ "mod", "-licenses", "-json", "-output", "$document", "./.." ]
 
 milestones:
-  - name_template: "{{ .Tag }}"
-    close: true
+- name_template: "{{ .Tag }}"
+  close: true
 
 changelog:
   use: github

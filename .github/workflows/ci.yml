@@ -3,26 +3,28 @@ name: CI
 on:
   push:
     branches:
-      - main
+    - main
   pull_request:
     branches:
-      - main
+    - main
+
+permissions: { }
 
 jobs:
-  golangci:
+  lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Go
-        uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab # tag=v3
-        with:
-          go-version: "1.17"
-      - name: Checkout Repository
-        uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846 # tag=v3
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@b517f99ae23d86ecc4c0dec08dcf48d2336abc29 # tag=v3
-        with:
-          version: latest
+    - name: Setup Go
+      uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab # tag=v3
+      with:
+        go-version: "1.17"
+    - name: Checkout Repository
+      uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846 # tag=v3
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@b517f99ae23d86ecc4c0dec08dcf48d2336abc29 # tag=v3
+      with:
+        version: latest
 
   test:
     name: Test
@@ -33,15 +35,15 @@ jobs:
       run:
         working-directory: ${{ env.GOPATH }}/src/${{ github.repository }}
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846 # tag=v3
-        with:
-          path: ${{ env.GOPATH }}/src/${{ github.repository }}
-      - name: Setup Go
-        uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab # tag=v3
-        with:
-          go-version: "1.17"
-      - name: Install yaegi
-        run: go install -v github.com/traefik/yaegi/cmd/yaegi@v0.11.3
-      - name: Test
-        run: make test-yaegi
+    - name: Checkout Repository
+      uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846 # tag=v3
+      with:
+        path: ${{ env.GOPATH }}/src/${{ github.repository }}
+    - name: Setup Go
+      uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab # tag=v3
+      with:
+        go-version: "1.17"
+    - name: Install yaegi
+      run: go install -v github.com/traefik/yaegi/cmd/yaegi@v0.11.3
+    - name: Test
+      run: make test-yaegi
