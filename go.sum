@@ -1,2 +1,4 @@
 github.com/ip2location/ip2location-go/v9 v9.2.0 h1:ZWURUspTpe2gxMQGtcQScocBd73gZKUEWlHCFUJYLHk=
 github.com/ip2location/ip2location-go/v9 v9.2.0/go.mod h1:s5SV6YZL10TpfPpXw//7fEJC65G/yH7Oh+Tjq9JcQEQ=
+github.com/ip2location/ip2location-go/v9 v9.3.0 h1:qfgr4ppf21ZyrOrmh4/db4SamL9hj+YYEl06dbf1cGM=
+github.com/ip2location/ip2location-go/v9 v9.3.0/go.mod h1:s5SV6YZL10TpfPpXw//7fEJC65G/yH7Oh+Tjq9JcQEQ=
