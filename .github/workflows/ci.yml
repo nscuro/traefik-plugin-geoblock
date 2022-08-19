@@ -44,6 +44,6 @@ jobs:
       with:
         go-version: "1.17"
     - name: Install yaegi
-      run: go install -v github.com/traefik/yaegi/cmd/yaegi@v0.13.0
+      run: go install -v github.com/traefik/yaegi/cmd/yaegi@v0.14.1
     - name: Test
       run: make test-yaegi
