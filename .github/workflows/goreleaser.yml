@@ -20,7 +20,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # tag=v3
       with:
-        go-version: "1.17"
+        go-version: "1.19"
     - name: Install cyclonedx-gomod
       uses: CycloneDX/gh-gomod-generate-sbom@d4aee0cf5133055dbd98899978246c10c18c440f # tag=v1
       with:
