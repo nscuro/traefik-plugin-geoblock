@@ -53,4 +53,6 @@ http:
           allowPrivate: true
           # HTTP status code to return for disallowed requests (default: 403)
           disallowedStatusCode: 204
+          # Add CIDR to be whitelisted, even if in a non-allowed country
+          allowedIPBlocks: ["66.249.64.0/19"]
 ```
