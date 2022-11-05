@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 
@@ -21,6 +22,7 @@ type Config struct {
 	AllowedCountries     []string // Whitelist of countries to allow (ISO 3166-1 alpha-2)
 	AllowPrivate         bool     // Allow requests from private / internal networks?
 	DisallowedStatusCode int      // HTTP status code to return for disallowed requests
+	AllowedIPBlocks      []string // List of whitelist CIDR
 }
 
 // CreateConfig creates the default plugin configuration.
@@ -36,6 +38,7 @@ type Plugin struct {
 	allowedCountries     []string
 	allowPrivate         bool
 	disallowedStatusCode int
+	allowedIPBlocks      []*net.IPNet
 }
 
 // New creates a new plugin instance.
@@ -70,6 +73,11 @@ func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.H
 		return nil, fmt.Errorf("%s: failed to open database: %w", name, err)
 	}
 
+	allowedIPBlocks, err := initAllowedIPBlocks(cfg.AllowedIPBlocks)
+	if err != nil {
+		return nil, fmt.Errorf("%s: failed loading allowed CIDR blocks: %w", name, err)
+	}
+
 	return &Plugin{
 		next:                 next,
 		name:                 name,
@@ -78,6 +86,7 @@ func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.H
 		allowedCountries:     cfg.AllowedCountries,
 		allowPrivate:         cfg.AllowPrivate,
 		disallowedStatusCode: cfg.DisallowedStatusCode,
+		allowedIPBlocks:      allowedIPBlocks,
 	}, nil
 }
 
@@ -154,10 +163,15 @@ func (p Plugin) CheckAllowed(ip string) (bool, string, error) {
 	var allowed bool
 	for _, allowedCountry := range p.allowedCountries {
 		if allowedCountry == country {
-			allowed = true
-			break
+			return true, country, nil
 		}
 	}
+
+	allowed, err = p.isAllowedIPBlocks(ip)
+	if err != nil {
+		return false, "", fmt.Errorf("checking if %s is part of an allowed range failed: %w", ip, err)
+	}
+
 	if !allowed {
 		return false, country, nil
 	}
@@ -178,4 +192,37 @@ func (p Plugin) Lookup(ip string) (string, error) {
 	}
 
 	return record.Country_short, nil
+}
+
+// Create IP Networks using CIDR block array
+func initAllowedIPBlocks(allowedIPBlocks []string) ([]*net.IPNet, error) {
+
+	var allowedIPBlocksNet []*net.IPNet
+
+	for _, cidr := range allowedIPBlocks {
+		_, block, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return nil, fmt.Errorf("parse error on %q: %v", cidr, err)
+		}
+		allowedIPBlocksNet = append(allowedIPBlocksNet, block)
+	}
+
+	return allowedIPBlocksNet, nil
+}
+
+// isAllowedIPBlocks check if an IP is allowed base on the allowed CIDR blocks
+func (p Plugin) isAllowedIPBlocks(ip string) (bool, error) {
+	var ipAddress net.IP = net.ParseIP(ip)
+
+	if ipAddress == nil {
+		return false, fmt.Errorf("unable parse IP address from address [%s]", ip)
+	}
+
+	for _, block := range p.allowedIPBlocks {
+		if block.Contains(ipAddress) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
