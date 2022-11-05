@@ -11,3 +11,4 @@ testData:
   # allowedCountries: [ "CH", "DE" ]
   # allowPrivate: true
   # disallowedStatusCode: 403
+  # allowedIPBlocks: ["66.249.64.0/19"]
