@@ -45,7 +45,7 @@ func TestNew(t *testing.T) {
 		}
 	})
 
-	t.Run("NoConfig", func(t *testing.T) {
+	t.Run("Nogeoblock.Config", func(t *testing.T) {
 		plugin, err := New(context.TODO(), &noopHandler{}, nil, pluginName)
 		if err == nil {
 			t.Errorf("expected error, but got none")
@@ -172,6 +172,54 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 
 		if rr.Code != http.StatusForbidden {
 			t.Errorf("expected status code %d, but got: %d", http.StatusForbidden, rr.Code)
+		}
+	})
+
+	t.Run("Blocklist", func(t *testing.T) {
+		cfg := &Config{
+			Enabled:              true,
+			DatabaseFilePath:     dbFilePath,
+			BlockedCountries:     []string{"US"},
+			AllowPrivate:         false,
+			DefaultAllow:         true,
+			DisallowedStatusCode: http.StatusForbidden,
+		}
+
+		testRequest(t, "US IP blocked", cfg, "8.8.8.8", http.StatusForbidden)
+		testRequest(t, "DE IP allowed", cfg, "185.5.82.105", 0)
+
+		cfg.BlockedCountries = nil
+		cfg.BlockedIPBlocks = []string{"8.8.8.0/24"}
+
+		testRequest(t, "Google DNS-A blocked", cfg, "8.8.8.8", http.StatusForbidden)
+		testRequest(t, "Google DNS-B allowed", cfg, "8.8.4.4", 0)
+
+		cfg.AllowedIPBlocks = []string{"8.8.8.7/32"}
+
+		testRequest(t, "Higher specificity IP CIDR allow trumps lower specificity IP CIDR block", cfg, "8.8.8.7", 0)
+		testRequest(t, "Higher specificity IP CIDR allow should not override encompassing CIDR block", cfg, "8.8.8.9", http.StatusForbidden)
+
+		cfg.DefaultAllow = false
+
+		testRequest(t, "Default allow false", cfg, "8.8.4.4", http.StatusForbidden)
+	})
+}
+
+func testRequest(t *testing.T, testName string, cfg *Config, ip string, expectedStatus int) {
+	t.Run(testName, func(t *testing.T) {
+		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
+		if err != nil {
+			t.Errorf("expected no error, but got: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
+		req.Header.Set("X-Real-IP", ip)
+
+		rr := httptest.NewRecorder()
+		plugin.ServeHTTP(rr, req)
+
+		if expectedStatus > 0 && rr.Code != expectedStatus {
+			t.Errorf("expected status code %d, but got: %d", expectedStatus, rr.Code)
 		}
 	})
 }

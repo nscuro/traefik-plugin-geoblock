@@ -5,7 +5,7 @@
 [![Latest GitHub release](https://img.shields.io/github/v/release/nscuro/traefik-plugin-geoblock?sort=semver)](https://github.com/nscuro/traefik-plugin-geoblock/releases/latest)
 [![License](https://img.shields.io/badge/license-Apache%202.0-brightgreen.svg)](LICENSE)  
 
-*traefik-plugin-geoblock is a traefik plugin to whitelist requests based on geolocation*
+*traefik-plugin-geoblock is a traefik plugin to allow or block requests based on geolocation*
 
 > This projects includes IP2Location LITE data available from [`lite.ip2location.com`](https://lite.ip2location.com/database/ip-country).
 
@@ -49,10 +49,16 @@ http:
           databaseFilePath: /plugins-local/src/github.com/nscuro/traefik-plugin-geoblock/IP2LOCATION-LITE-DB1.IPV6.BIN
           # Whitelist of countries to allow (ISO 3166-1 alpha-2)
           allowedCountries: [ "AT", "CH", "DE" ]
+          # Blocklist of countries to block (ISO 3166-1 alpha-2)
+          blockedCountries: [ "RU" ]
+          # Default allow indicates that if an IP is in neither block list nor allow lists, it should be allowed.
+          defaultAllow: false
           # Allow requests from private / internal networks?
           allowPrivate: true
           # HTTP status code to return for disallowed requests (default: 403)
           disallowedStatusCode: 204
           # Add CIDR to be whitelisted, even if in a non-allowed country
           allowedIPBlocks: ["66.249.64.0/19"]
+          # Add CIDR to be blacklisted, even if in an allowed country or IP block
+          blockedIPBlocks: ["66.249.64.5/32"]
 ```
