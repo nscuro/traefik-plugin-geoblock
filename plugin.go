@@ -169,10 +169,6 @@ func (p Plugin) CheckAllowed(ip string) (allow bool, country string, err error) 
 		return false, ip, fmt.Errorf("lookup of %s failed: %w", ip, err)
 	}
 
-	if country == "-" {
-		return p.allowPrivate, country, nil
-	}
-
 	if country != "-" {
 		for _, item := range p.blockedCountries {
 			if item == country {

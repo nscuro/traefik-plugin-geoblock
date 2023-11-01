@@ -106,8 +106,8 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 			Enabled:              true,
 			DatabaseFilePath:     dbFilePath,
 			AllowedCountries:     []string{},
-			AllowPrivate:         true,
 			DisallowedStatusCode: http.StatusOK,
+			DefaultAllow:         true,
 		}
 
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
@@ -157,6 +157,7 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 			AllowedCountries:     []string{},
 			AllowPrivate:         false,
 			DisallowedStatusCode: http.StatusForbidden,
+			DefaultAllow:         false,
 		}
 
 		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
