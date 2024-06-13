@@ -20,7 +20,7 @@ jobs:
       with:
         go-version: "1.20"
     - name: Checkout Repository
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@a4f60bb28d35aeee14e6880718e0c85ff1882e64 # v6
       with:
@@ -36,7 +36,7 @@ jobs:
         working-directory: ${{ env.GOPATH }}/src/${{ github.repository }}
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
       with:
         path: ${{ env.GOPATH }}/src/${{ github.repository }}
     - name: Setup Go
