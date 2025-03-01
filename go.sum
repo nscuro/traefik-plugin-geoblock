@@ -1,2 +1,8 @@
-github.com/ip2location/ip2location-go/v9 v9.5.0 h1:7gqKncm4MhBrpJIK0PmV8o6Bf8YbbSAPjORzyjAv1iM=
-github.com/ip2location/ip2location-go/v9 v9.5.0/go.mod h1:s5SV6YZL10TpfPpXw//7fEJC65G/yH7Oh+Tjq9JcQEQ=
+github.com/david-garcia-garcia/ip2location-go/v9 v9.7.1-removeunsafe h1:aJmDQkV6Tm1fIfmT55+uLux+TBrV1NeRoEWFCNw2jXU=
+github.com/david-garcia-garcia/ip2location-go/v9 v9.7.1-removeunsafe/go.mod h1:MPLnsKxwQlvd2lBNcQCsLoyzJLDBFizuO67wXXdzoyI=
+github.com/david-garcia-garcia/ip2location-go/v9 v9.7.1-safe h1:Mi5aFJGnXID4DkA5ogIzqhQwSmBitXpcFMUAjyYzsTk=
+github.com/david-garcia-garcia/ip2location-go/v9 v9.7.1-safe/go.mod h1:MPLnsKxwQlvd2lBNcQCsLoyzJLDBFizuO67wXXdzoyI=
+lukechampine.com/uint128 v1.2.0 h1:mBi/5l91vocEN8otkC5bDLhi2KdCticRiwbdB0O+rjI=
+lukechampine.com/uint128 v1.2.0/go.mod h1:c4eWIwlEGaxC/+H1VguhU4PHXNWDCDMUlWdIWl2j1gk=
+lukechampine.com/uint128 v1.3.0 h1:cDdUVfRwDUDovz610ABgFD17nXD4/uDgVHl2sC3+sbo=
+lukechampine.com/uint128 v1.3.0/go.mod h1:c4eWIwlEGaxC/+H1VguhU4PHXNWDCDMUlWdIWl2j1gk=

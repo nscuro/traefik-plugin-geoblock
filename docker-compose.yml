@@ -1,0 +1,62 @@
+services:
+  traefik:
+    image: "traefik:v3.1.7"
+    container_name: "traefik"
+    restart: unless-stopped
+    command:
+      - "--log.level=DEBUG"
+      - "--accesslog"
+      - "--accesslog.filepath=/var/log/traefik/access.log"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+
+      - "--experimental.localplugins.geoblock.modulename=github.com/nscuro/traefik-plugin-geoblock"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - logs-local:/var/log/traefik
+      - './geoblockban.html:/geoblockban.html:ro'
+      - ./:/plugins-local/src/github.com/nscuro/traefik-plugin-geoblock
+    ports:
+      - 8000:80
+      - 8080:8080
+
+  whoami-foo:
+    image: traefik/whoami
+    container_name: "simple-service-foo"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.router-foo.rule=PathPrefix(`/foo`)"
+      - "traefik.http.routers.router-foo.entrypoints=web"
+      - "traefik.http.routers.router-foo.middlewares=geoblock2@docker"
+      - "traefik.http.services.service-foo.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.geoblock2.plugin.geoblock.enabled=true"
+      - "traefik.http.middlewares.geoblock2.plugin.geoblock.loglevel=DEBUG"
+      - "traefik.http.middlewares.geoblock2.plugin.geoblock.logpath="
+      - "traefik.http.middlewares.geoblock2.plugin.geoblock.logformat="
+      - "traefik.http.middlewares.geoblock2.plugin.geoblock.databaseFilePath=/plugins-local/src/github.com/nscuro/traefik-plugin-geoblock/IP2LOCATION-LITE-DB1.IPV6.BIN"
+      - "traefik.http.middlewares.geoblock2.plugin.geoblock.banHtmlFilePath=/plugins-local/src/github.com/nscuro/traefik-plugin-geoblock/geoblockban.html"
+      - "traefik.http.middlewares.geoblock2.plugin.geoblock.allowPrivate=true"
+
+  whoami2:
+    image: traefik/whoami
+    container_name: "simple-service-bar"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.router-bar.rule=PathPrefix(`/bar`)"
+      - "traefik.http.routers.router-bar.entrypoints=web"
+      - "traefik.http.routers.router-bar.middlewares=geoblock@docker"
+      - "traefik.http.services.service-bar.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.geoblock.plugin.geoblock.enabled=true"
+      - "traefik.http.middlewares.geoblock.plugin.geoblock.loglevel=DEBUG"
+      - "traefik.http.middlewares.geoblock.plugin.geoblock.logpath="
+      - "traefik.http.middlewares.geoblock.plugin.geoblock.logformat="
+      - "traefik.http.middlewares.geoblock.plugin.geoblock.databaseFilePath=/plugins-local"
+      - "traefik.http.middlewares.geoblock.plugin.geoblock.banHtmlFilePath=/plugins-local"
+      - "traefik.http.middlewares.geoblock.plugin.geoblock.databaseAutoupdate=true"
+      - "traefik.http.middlewares.geoblock.plugin.geoblock.databaseAutoUpdateDir=/data/ip2database"
+volumes:
+  logs-local:
