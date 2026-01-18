@@ -263,20 +263,41 @@ func (p Plugin) Lookup(ip string) (string, error) {
 	return record.Country_short, nil
 }
 
-// Create IP Networks using CIDR block array
+// Create IP Networks using CIDR block array or try to resolve via DNS Lookup
 func initIPBlocks(ipBlocks []string) ([]*net.IPNet, error) {
+    var ipBlocksNet []*net.IPNet
 
-	var ipBlocksNet []*net.IPNet
+    for _, item := range ipBlocks {
+        // Try to parse as CIDR first
+        _, block, err := net.ParseCIDR(item)
+        if err == nil {
+            ipBlocksNet = append(ipBlocksNet, block)
+            continue
+        }
 
-	for _, cidr := range ipBlocks {
-		_, block, err := net.ParseCIDR(cidr)
-		if err != nil {
-			return nil, fmt.Errorf("parse error on %q: %v", cidr, err)
-		}
-		ipBlocksNet = append(ipBlocksNet, block)
-	}
+        // If CIDR parsing fails, try DNS resolution
+        ips, err := net.LookupIP(item)
+        if err != nil {
+            return nil, fmt.Errorf("failed to parse CIDR or resolve DNS for %q: %v", item, err)
+        }
 
-	return ipBlocksNet, nil
+        // Convert resolved IPs to /32 (IPv4) or /128 (IPv6) networks
+        for _, ip := range ips {
+            var cidr string
+            if ip.To4() != nil {
+                cidr = ip.String() + "/32"
+            } else {
+                cidr = ip.String() + "/128"
+            }
+            _, block, err := net.ParseCIDR(cidr)
+            if err != nil {
+                return nil, fmt.Errorf("failed to create CIDR for resolved IP %s: %v", ip, err)
+            }
+            ipBlocksNet = append(ipBlocksNet, block)
+        }
+    }
+
+    return ipBlocksNet, nil
 }
 
 // isAllowedIPBlocks checks if an IP is allowed base on the allowed CIDR blocks
