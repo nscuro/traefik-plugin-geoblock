@@ -18,6 +18,7 @@ import (
 type Config struct {
 	Enabled              bool     // Enable this plugin?
 	DatabaseFilePath     string   // Path to ip2location database file
+	IPHeader             string   // Optional header to trust for the client IP address
 	AllowedCountries     []string // Whitelist of countries to allow (ISO 3166-1 alpha-2)
 	BlockedCountries     []string // Blocklist of countries to be blocked (ISO 3166-1 alpha-2)
 	DefaultAllow         bool     // If source matches neither blocklist nor whitelist, should it be allowed through?
@@ -37,6 +38,7 @@ type Plugin struct {
 	name                 string
 	db                   *ip2location.DB
 	enabled              bool
+	ipHeader             string
 	allowedCountries     []string
 	blockedCountries     []string
 	defaultAllow         bool
@@ -94,6 +96,7 @@ func New(_ context.Context, next http.Handler, cfg *Config, name string) (http.H
 		name:                 name,
 		db:                   db,
 		enabled:              cfg.Enabled,
+		ipHeader:             cfg.IPHeader,
 		allowedCountries:     cfg.AllowedCountries,
 		blockedCountries:     cfg.BlockedCountries,
 		defaultAllow:         cfg.DefaultAllow,
@@ -128,21 +131,28 @@ func (p Plugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	p.next.ServeHTTP(rw, req)
 }
 
-// GetRemoteIPs collects the remote IPs from the X-Forwarded-For and X-Real-IP headers.
+// GetRemoteIPs collects the remote IPs from a configured client IP header, or
+// falls back to X-Forwarded-For and X-Real-IP when no custom header is configured.
 func (p Plugin) GetRemoteIPs(req *http.Request) []string {
+	if p.ipHeader != "" {
+		return uniqueIPs(req.Header.Values(p.ipHeader))
+	}
+
+	return uniqueIPs([]string{
+		req.Header.Get("x-forwarded-for"),
+		req.Header.Get("x-real-ip"),
+	})
+}
+
+func uniqueIPs(headerValues []string) []string {
 	uniqIPs := make(map[string]struct{})
 
-	if xff := req.Header.Get("x-forwarded-for"); xff != "" {
-		for _, ip := range strings.Split(xff, ",") {
-			ip = strings.TrimSpace(ip)
-			if ip == "" {
-				continue
-			}
-			uniqIPs[ip] = struct{}{}
+	for _, headerValue := range headerValues {
+		if headerValue == "" {
+			continue
 		}
-	}
-	if xri := req.Header.Get("x-real-ip"); xri != "" {
-		for _, ip := range strings.Split(xri, ",") {
+
+		for _, ip := range strings.Split(headerValue, ",") {
 			ip = strings.TrimSpace(ip)
 			if ip == "" {
 				continue

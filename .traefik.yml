@@ -8,6 +8,7 @@ testData:
   # This will cause the plugin to not attempt to load the database file.
   enabled: false
   # databaseFilePath: IP2LOCATION-LITE-DB1.IPV6.BIN
+  # ipHeader: CF-Connecting-IP
   # allowedCountries: [ "CH", "DE" ]
   # blockedCountries: [ "RU" ]
   # defaultAllow: false

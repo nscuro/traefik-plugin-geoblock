@@ -47,6 +47,8 @@ http:
           enabled: true
           # Path to ip2location database file
           databaseFilePath: /plugins-local/src/github.com/nscuro/traefik-plugin-geoblock/IP2LOCATION-LITE-DB1.IPV6.BIN
+          # Optional trusted header to use for the client IP instead of X-Forwarded-For / X-Real-IP
+          ipHeader: CF-Connecting-IP
           # Whitelist of countries to allow (ISO 3166-1 alpha-2)
           allowedCountries: [ "AT", "CH", "DE" ]
           # Blocklist of countries to block (ISO 3166-1 alpha-2)
@@ -62,3 +64,5 @@ http:
           # Add CIDR to be blacklisted, even if in an allowed country or IP block
           blockedIPBlocks: ["66.249.64.5/32"]
 ```
+
+If the optional `ipHeader` parameter is configured, the plugin reads the client IP from that header and does not use `X-Forwarded-For` or `X-Real-IP` for that request. This is useful when a trusted upstream service such as a WAF (eg. Cloudflare) specifies the client IP in a custom header.
