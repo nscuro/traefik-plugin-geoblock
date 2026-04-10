@@ -203,6 +203,66 @@ func TestPlugin_ServeHTTP(t *testing.T) {
 
 		testRequest(t, "Default allow false", cfg, "8.8.4.4", http.StatusForbidden)
 	})
+
+	t.Run("CustomIPHeader", func(t *testing.T) {
+		cfg := &Config{
+			Enabled:              true,
+			DatabaseFilePath:     dbFilePath,
+			IPHeader:             "CF-Connecting-IP",
+			AllowedCountries:     []string{"US"},
+			DisallowedStatusCode: http.StatusForbidden,
+		}
+
+		plugin, err := New(context.TODO(), &noopHandler{}, cfg, pluginName)
+		if err != nil {
+			t.Errorf("expected no error, but got: %v", err)
+		}
+
+		req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
+		req.Header.Set("CF-Connecting-IP", "1.1.1.1")
+		req.Header.Set("X-Real-IP", "185.5.82.105")
+
+		rr := httptest.NewRecorder()
+		plugin.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusTeapot {
+			t.Errorf("expected status code %d, but got: %d", http.StatusTeapot, rr.Code)
+		}
+	})
+}
+
+func TestPlugin_GetRemoteIPs(t *testing.T) {
+	t.Run("UsesConfiguredHeader", func(t *testing.T) {
+		plugin := Plugin{ipHeader: "CF-Connecting-IP"}
+
+		req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
+		req.Header.Add("CF-Connecting-IP", "1.1.1.1")
+		req.Header.Add("CF-Connecting-IP", "8.8.8.8, 1.1.1.1")
+		req.Header.Set("X-Forwarded-For", "185.5.82.105")
+		req.Header.Set("X-Real-IP", "185.5.82.105")
+
+		ips := plugin.GetRemoteIPs(req)
+
+		if len(ips) != 2 {
+			t.Fatalf("expected 2 IPs, but got %d", len(ips))
+		}
+
+		expected := map[string]struct{}{
+			"1.1.1.1": {},
+			"8.8.8.8": {},
+		}
+
+		for _, ip := range ips {
+			if _, ok := expected[ip]; !ok {
+				t.Fatalf("unexpected IP %q returned", ip)
+			}
+			delete(expected, ip)
+		}
+
+		if len(expected) != 0 {
+			t.Fatalf("missing IPs: %v", expected)
+		}
+	})
 }
 
 func testRequest(t *testing.T, testName string, cfg *Config, ip string, expectedStatus int) {
